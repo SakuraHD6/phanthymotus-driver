@@ -28,3 +28,13 @@ rov:
   camera_topic: "/qianjiao_p200_pro/camera/color"
   camera_light_path: "/v1/light"
   mock: false
+  semantic_segmentation:
+    source_root: "/opt/uwsegformer"
+    checkpoint: "/models/uwsegformer/suim.pth"
+    # Optional direct file link; when empty, locate uws_SUIM.pth in the author's folder.
+    google_drive_file_url: ""
+    # Optional SHA256 from a trusted source; leave empty if unavailable.
+    checkpoint_sha256: ""
+    device: "cpu"
+    fps: 2.0
+    opacity: 0.5

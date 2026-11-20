@@ -10,6 +10,7 @@ chasing-qianjiao-p200-pro:
     # All Agent Core-facing ROS2 participants use the host-local FastDDS profile.
     # The ROV itself is reached over MAVLink/RTSP and does not use DDS.
     - /opt/phanthy-motus/dds-local.xml:/opt/phanthy-motus/dds-local.xml:ro
+    - /opt/embodied/models/uwsegformer:/models/uwsegformer:rw
   environment:
     - MCP_ADVERTISE_HOST=${MCP_ADVERTISE_HOST:-127.0.0.1}
     - ROS_DOMAIN_ID=42

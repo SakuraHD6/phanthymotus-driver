@@ -15,5 +15,6 @@ cards:
   - { name: battery, type: sensor }
   - { name: imu, type: sensor }
   - { name: camera, type: sensor }
+  - { name: semantic_segmentation, type: processor }
   - { name: control, type: actuator }
 mcp_port: 15739

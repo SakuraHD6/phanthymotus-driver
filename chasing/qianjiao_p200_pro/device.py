@@ -14,6 +14,8 @@ import os
 import time
 from typing import Any
 
+from semantic_segmentation.plugin import SemanticSegmentationPlugin
+
 try:
     from pymavlink import mavutil
 except ImportError:  # importable in development without the optional SDK
@@ -114,6 +116,8 @@ class QianjiaoDevice:
         self._video_ready = False
         self._video_error: str | None = None
         self._last_rc_command: dict[str, Any] | None = None
+        self.semantic_segmentation = SemanticSegmentationPlugin(
+            cfg.get("semantic_segmentation"), lambda: self._ros_node)
 
     def _redacted_rtsp(self) -> str:
         return f"rtsp://{self.camera_ip}:8554/stream/0/0"
@@ -276,6 +280,7 @@ class QianjiaoDevice:
         if self._video_thread:
             self._video_thread.join(timeout=3)
             self._video_thread = None
+        self.semantic_segmentation.stop()
         if self._ros_node is not None:
             self._ros_node.destroy_node()
             self._ros_node = None
@@ -614,7 +619,7 @@ class QianjiaoDevice:
                 "info": {"params": [], "description": "读取控制链路状态"},
             },
         }
-        return [
+        tools = [
             sensor("loco_state", "潜鲛运动状态：姿态角、深度和定位信息。", self.loco_state_topic),
             sensor("status", "潜鲛系统状态：连接、温度和健康信息。", self.status_topic),
             sensor("battery", "潜鲛电池状态：电压、电流和剩余电量。", self.battery_topic),
@@ -622,9 +627,13 @@ class QianjiaoDevice:
             {"name": "camera", "type": "sensor", "description": "潜鲛实时相机图像（RTSP 转 JPEG）。", "topic_out": [{"topic": self.camera_topic, "format": "image/jpeg"}], "inputSchema": {"type": "object", "properties": {"action": {"type": "string", "enum": ["start", "stop", "info"], "description": "相机流生命周期或信息查询"}}, "required": ["action"]}},
             {"name": "control", "type": "actuator", "description": "潜鲛 P200 Pro 运动控制：解锁、停止或发送 6 自由度控制量。", "inputSchema": control_schema},
         ]
+        tools.append(self.semantic_segmentation.get_tool())
+        return tools
 
     def dispatch(self, tool: str, args: dict) -> dict:
         action = args.get("action", "info")
+        if tool == self.semantic_segmentation.NAME:
+            return self.semantic_segmentation.dispatch(action, args)
         sensor_tools = {
             "status": self.status_topic, "battery": self.battery_topic,
             "imu": self.imu_topic, "loco_state": self.loco_state_topic,
